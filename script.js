@@ -318,3 +318,5 @@ function renderAll(){
 
 // ===== INIT =====
 loadData(); setDate(); renderAll();
+// ===== SERVICE WORKER FOR PWA =====
+if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); }); }
