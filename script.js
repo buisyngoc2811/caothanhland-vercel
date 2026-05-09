@@ -317,6 +317,46 @@ function renderAll(){
 }
 
 // ===== INIT =====
+// ===== NOTIFICATIONS =====
+function checkNotifications() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then(permission => {
+      if(permission === 'granted') checkAndSend();
+    });
+  } else if (Notification.permission === 'granted') {
+    checkAndSend();
+  }
+  function checkAndSend() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const lastNotified = localStorage.getItem('last_notified_date');
+    if (lastNotified === todayStr) return;
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    let notifyItems = [];
+    auctionData.forEach(a => {
+      const d = new Date(a.date);
+      d.setHours(0,0,0,0);
+      const diffDays = Math.round((d - now) / 86400000);
+      if (diffDays === 0) notifyItems.push(Hôm nay:  lúc );
+      else if (diffDays > 0 && diffDays <= 3) notifyItems.push(Còn  ngày: );
+    });
+    if (notifyItems.length > 0) {
+      const title = '🔨 Nhắc nhở đấu giá sắp tới!';
+      const options = { body: notifyItems.join('\n'), icon: 'icon.svg', vibrate: [200, 100, 200] };
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(reg => {
+          reg.showNotification(title, options);
+          localStorage.setItem('last_notified_date', todayStr);
+        });
+      } else {
+        new Notification(title, options);
+        localStorage.setItem('last_notified_date', todayStr);
+      }
+    }
+  }
+}
 loadData(); setDate(); renderAll();
+checkNotifications();
 // ===== SERVICE WORKER FOR PWA =====
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); }); }
