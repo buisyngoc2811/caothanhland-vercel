@@ -338,8 +338,8 @@ function checkNotifications() {
       const d = new Date(a.date);
       d.setHours(0,0,0,0);
       const diffDays = Math.round((d - now) / 86400000);
-      if (diffDays === 0) notifyItems.push(Hôm nay:  lúc );
-      else if (diffDays > 0 && diffDays <= 3) notifyItems.push(Còn  ngày: );
+      if (diffDays === 0) notifyItems.push(`Hôm nay: ${a.name} lúc ${a.time}`);
+      else if (diffDays > 0 && diffDays <= 3) notifyItems.push(`Còn ${diffDays} ngày: ${a.name}`);
     });
     if (notifyItems.length > 0) {
       const title = '🔨 Nhắc nhở đấu giá sắp tới!';
