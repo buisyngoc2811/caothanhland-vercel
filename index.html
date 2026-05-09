@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Sơn BĐS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app-container">
+  <!-- HEADER -->
+  <div class="app-header">
+    <div class="header-top">
+      <div class="header-logo">
+        <div class="logo-icon">🏠</div>
+        <div class="logo-text">
+          <h1>BĐS Manager</h1>
+          <p>Quản lý mua bán bất động sản</p>
+        </div>
+      </div>
+      <div class="header-date" id="header-date"></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row" id="stats-row"></div>
+
+  <!-- TABS (ẩn, dùng bottom nav) -->
+
+  <!-- ====== PAGE: DASHBOARD ====== -->
+  <div class="page active" id="page-dashboard">
+    <div class="section-hd">
+      <div>
+        <div class="section-title">Tổng quan</div>
+        <div class="section-sub">Hoạt động gần đây</div>
+      </div>
+    </div>
+
+    <!-- Chart lợi nhuận -->
+    <div class="chart-wrap" id="profit-chart-wrap">
+      <div class="chart-title">Lợi nhuận theo BĐS đã bán</div>
+      <div class="bar-chart" id="profit-chart"></div>
+    </div>
+
+    <!-- Đấu giá sắp tới -->
+    <div class="section-hd" style="margin-top:4px">
+      <div class="section-title">⚡ Đấu giá sắp tới</div>
+    </div>
+    <div id="dash-auctions"></div>
+
+    <!-- BĐS gần đây -->
+    <div class="section-hd" style="margin-top:16px">
+      <div class="section-title">📋 BĐS gần đây</div>
+    </div>
+    <div id="dash-bds"></div>
+  </div>
+
+  <!-- ====== PAGE: BĐS ====== -->
+  <div class="page" id="page-bds">
+    <div class="section-hd">
+      <div class="section-title">Danh sách BĐS</div>
+      <span id="bds-count" style="font-size:12px;color:var(--text-muted)"></span>
+    </div>
+
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="search-bds" placeholder="Tìm theo tên, địa chỉ..." oninput="renderBDS()">
+    </div>
+
+    <div class="filter-row" id="bds-filters">
+      <div class="filter-chip active" data-filter="" onclick="setFilter(this,'')">Tất cả</div>
+      <div class="filter-chip" data-filter="theo-doi" onclick="setFilter(this,'theo-doi')">👁 Theo dõi</div>
+      <div class="filter-chip" data-filter="da-mua" onclick="setFilter(this,'da-mua')">🏠 Đã mua</div>
+      <div class="filter-chip" data-filter="dang-ban" onclick="setFilter(this,'dang-ban')">📣 Đang bán</div>
+      <div class="filter-chip" data-filter="da-ban" onclick="setFilter(this,'da-ban')">✅ Đã bán</div>
+    </div>
+
+    <div id="bds-list"></div>
+  </div>
+
+  <!-- ====== PAGE: ĐẤU GIÁ ====== -->
+  <div class="page" id="page-auction">
+    <div class="section-hd">
+      <div class="section-title">Lịch đấu giá</div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-chip active" data-af="" onclick="setAFilter(this,'')">Tất cả</div>
+      <div class="filter-chip" data-af="upcoming" onclick="setAFilter(this,'upcoming')">⏳ Sắp tới</div>
+      <div class="filter-chip" data-af="past" onclick="setAFilter(this,'past')">📁 Đã qua</div>
+    </div>
+    <div id="auction-list"></div>
+  </div>
+
+  <!-- ====== PAGE: TÍNH LỢI NHUẬN ====== -->
+  <div class="page" id="page-calc">
+    <div class="section-hd">
+      <div class="section-title">Tính lợi nhuận</div>
+    </div>
+
+    <div class="card">
+      <div class="calc-title">💰 Thông tin giao dịch</div>
+      <div class="input-grid">
+        <div class="input-group">
+          <label class="input-label">Giá mua</label>
+          <div class="input-wrap"><input type="number" id="c-buy" placeholder="0" oninput="calcProfit()"><span class="input-unit">triệu</span></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Giá bán</label>
+          <div class="input-wrap"><input type="number" id="c-sell" placeholder="0" oninput="calcProfit()"><span class="input-unit">triệu</span></div>
+        </div>
+      </div>
+      <div class="calc-title" style="margin-top:14px">📊 Chi phí phát sinh</div>
+      <div class="input-grid">
+        <div class="input-group">
+          <label class="input-label">Thuế trước bạ</label>
+          <div class="input-wrap"><input type="number" id="c-tax" value="0.5" oninput="calcProfit()"><span class="input-unit">%</span></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Phí môi giới</label>
+          <div class="input-wrap"><input type="number" id="c-broker" value="1" oninput="calcProfit()"><span class="input-unit">%</span></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Sửa chữa</label>
+          <div class="input-wrap"><input type="number" id="c-repair" value="0" oninput="calcProfit()"><span class="input-unit">triệu</span></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Chi phí khác</label>
+          <div class="input-wrap"><input type="number" id="c-other" value="0" oninput="calcProfit()"><span class="input-unit">triệu</span></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Lãi vay/tháng</label>
+          <div class="input-wrap"><input type="number" id="c-interest" value="0" oninput="calcProfit()"><span class="input-unit">triệu</span></div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">Số tháng giữ</label>
+          <div class="input-wrap"><input type="number" id="c-months" value="6" oninput="calcProfit()"><span class="input-unit">tháng</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="calc-result-box" id="calc-result">
+      <div class="empty-state" style="padding:20px">
+        <div class="empty-icon">🧮</div>
+        <div class="empty-text">Nhập giá mua và giá bán</div>
+        <div class="empty-sub">để xem kết quả tính toán</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== PAGE: GHI CHÚ ====== -->
+  <div class="page" id="page-notes">
+    <div class="section-hd">
+      <div class="section-title">Ghi chú & nhắc nhở</div>
+    </div>
+    <div id="note-list"></div>
+  </div>
+
+  <!-- FAB -->
+  <button class="btn-add-fab" id="fab-btn" onclick="openAdd()" aria-label="Thêm mới">+</button>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" id="nav-dashboard" onclick="switchPage('dashboard')">
+      <span class="nav-icon">📊</span>
+      <span>Tổng quan</span>
+    </div>
+    <div class="nav-item" id="nav-bds" onclick="switchPage('bds')">
+      <span class="nav-icon">🏠</span>
+      <span>BĐS</span>
+    </div>
+    <div class="nav-item" id="nav-auction" onclick="switchPage('auction')">
+      <span class="nav-icon">🔨</span>
+      <span>Đấu giá</span>
+    </div>
+    <div class="nav-item" id="nav-calc" onclick="switchPage('calc')">
+      <span class="nav-icon">🧮</span>
+      <span>Tính lãi</span>
+    </div>
+    <div class="nav-item" id="nav-notes" onclick="switchPage('notes')">
+      <span class="nav-icon">📝</span>
+      <span>Ghi chú</span>
+    </div>
+  </nav>
+</div>
+
+<!-- ====== MODAL: THÊM BĐS ====== -->
+<div class="modal-overlay" id="modal-bds">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title" id="modal-bds-title">➕ Thêm bất động sản</div>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="bds-edit-id">
+      <div class="field">
+        <label>Tên / Địa chỉ</label>
+        <input type="text" id="f-name" placeholder="Vd: Đất lô B12, KDC Tân Phú, TP.HCM">
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Loại BĐS</label>
+          <select id="f-type">
+            <option>Đất nền</option><option>Nhà phố</option><option>Căn hộ</option>
+            <option>Đất ruộng</option><option>Biệt thự</option><option>Nhà xưởng</option><option>Đất công nghiệp</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Trạng thái</label>
+          <select id="f-status">
+            <option value="theo-doi">👁 Theo dõi</option>
+            <option value="da-mua">🏠 Đã mua</option>
+            <option value="dang-ban">📣 Đang bán</option>
+            <option value="da-ban">✅ Đã bán</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Giá mua (triệu đồng)</label>
+          <input type="number" id="f-buy" placeholder="0">
+        </div>
+        <div class="field">
+          <label>Giá bán / Dự kiến (triệu)</label>
+          <input type="number" id="f-sell" placeholder="0">
+        </div>
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Diện tích (m²)</label>
+          <input type="number" id="f-area" placeholder="0">
+        </div>
+        <div class="field">
+          <label>Ngày mua</label>
+          <input type="date" id="f-date">
+        </div>
+      </div>
+      <div class="field">
+        <label>Ghi chú</label>
+        <textarea id="f-note" placeholder="Ghi chú thêm về lô đất..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('bds')">Hủy</button>
+      <button class="btn-primary" onclick="saveBDS()">💾 Lưu BĐS</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MODAL: THÊM ĐẤU GIÁ ====== -->
+<div class="modal-overlay" id="modal-auction">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><div class="modal-title">🔨 Thêm lịch đấu giá</div></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Tên / Địa chỉ tài sản</label>
+        <input type="text" id="a-name" placeholder="Vd: Đất lô 12, KCN Mỹ Phước, Bình Dương">
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Ngày đấu giá</label>
+          <input type="date" id="a-date">
+        </div>
+        <div class="field">
+          <label>Giờ</label>
+          <input type="time" id="a-time" value="08:00">
+        </div>
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Giá khởi điểm (triệu)</label>
+          <input type="number" id="a-start" placeholder="0">
+        </div>
+        <div class="field">
+          <label>Giá mục tiêu (triệu)</label>
+          <input type="number" id="a-target" placeholder="0">
+        </div>
+      </div>
+      <div class="field">
+        <label>Địa điểm tổ chức</label>
+        <input type="text" id="a-place" placeholder="Vd: TT Đấu giá tỉnh Bình Dương">
+      </div>
+      <div class="field">
+        <label>Ghi chú (hồ sơ, đặt cọc...)</label>
+        <textarea id="a-note" placeholder="Cần chuẩn bị..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('auction')">Hủy</button>
+      <button class="btn-primary" onclick="saveAuction()">💾 Lưu lịch</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MODAL: THÊM GHI CHÚ ====== -->
+<div class="modal-overlay" id="modal-note">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><div class="modal-title">📝 Thêm ghi chú</div></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Tiêu đề</label>
+        <input type="text" id="n-title" placeholder="Vd: Gặp anh Hùng về lô B5">
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label>Nhãn</label>
+          <select id="n-tag">
+            <option>📞 Liên hệ</option><option>⏰ Nhắc nhở</option><option>📄 Pháp lý</option>
+            <option>💵 Tài chính</option><option>📌 Quan trọng</option><option>💡 Ý tưởng</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ngày nhắc</label>
+          <input type="date" id="n-date">
+        </div>
+      </div>
+      <div class="field">
+        <label>Nội dung chi tiết</label>
+        <textarea id="n-text" placeholder="Nội dung ghi chú..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('note')">Hủy</button>
+      <button class="btn-primary" onclick="saveNote()">💾 Lưu ghi chú</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MODAL: CHỌN LOẠI THÊM ====== -->
+<div class="modal-overlay" id="modal-add-type">
+  <div class="modal-sheet" style="border-radius:24px 24px 0 0">
+    <div class="modal-handle"></div>
+    <div class="modal-header"><div class="modal-title">Thêm mới...</div></div>
+    <div class="modal-body" style="padding-bottom:8px">
+      <button onclick="closeModal('add-type');openModal('bds')" style="width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:10px;text-align:left;cursor:pointer;transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span style="font-size:28px">🏠</span>
+        <div><div style="font-size:15px;font-weight:600;color:var(--text-primary)">Bất động sản</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">Thêm lô đất, nhà phố, căn hộ...</div></div>
+      </button>
+      <button onclick="closeModal('add-type');openModal('auction')" style="width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:10px;text-align:left;cursor:pointer;transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span style="font-size:28px">🔨</span>
+        <div><div style="font-size:15px;font-weight:600;color:var(--text-primary)">Lịch đấu giá</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">Thêm buổi đấu giá sắp tới</div></div>
+      </button>
+      <button onclick="closeModal('add-type');openModal('note')" style="width:100%;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;display:flex;align-items:center;gap:14px;margin-bottom:4px;text-align:left;cursor:pointer;transition:border-color 0.15s" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
+        <span style="font-size:28px">📝</span>
+        <div><div style="font-size:15px;font-weight:600;color:var(--text-primary)">Ghi chú</div><div style="font-size:12px;color:var(--text-muted);margin-top:2px">Nhắc nhở, liên hệ, pháp lý...</div></div>
+      </button>
+    </div>
+    <div style="padding:0 20px 24px"><button class="btn-secondary" style="width:100%;justify-content:center" onclick="closeModal('add-type')">Đóng</button></div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
